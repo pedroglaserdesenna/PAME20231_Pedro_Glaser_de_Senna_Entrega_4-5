@@ -16,18 +16,30 @@ export class UserService {
     delete createUserDto.password;
 
     const newUser = this.userRepository.create({
-      hashed_password,
+      hashed_password: hashed_password,
       ...createUserDto
     });
     return this.userRepository.save(newUser)
   }
 
-  findOneByEmail(email: string) {
-    return this.userRepository.findOneBy({ email });
+  findOneByEmail(email: string, showPassword = false): Promise<User> {
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.email = :email', { email });
+
+    if (showPassword) {
+      query.addSelect('user.hashed_password');
+    }
+
+    return query.getOne()
+  }
+
+  findOne(id: number): Promise<User> {
+    return this.userRepository.findOneByOrFail({ id })
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+    this.userRepository.update({id}, {...updateUserDto});
   }
 
   remove(id: number) {
